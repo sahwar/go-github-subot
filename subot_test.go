@@ -5,17 +5,18 @@ import (
 	"testing"
 )
 
-func TestSubot(t *testing.T) {
-	// Sets username to send as User-Agent
+func setCredentials() {
 	config.UserName = "Subot"
-	// Sets token to work as authorized user
 	config.Token = "ee01c5067e591928deca6c902da04be48f89f9fa"
+}
+
+func TestSubot(t *testing.T) {
+	setCredentials()
 	var users []User
 
-	// Get response from https://api.github.com/users
 	data, status := get(API+"/users", nil)
 	// Attempt to parse response as array of User structure
-	if err := json.Unmarshal(data, &users); err != nil || status != 200 {
+	if err := json.Unmarshal(data, &users); err != nil || status != SUCCESS {
 		t.Fatal(err, status, string(data))
 	}
 
