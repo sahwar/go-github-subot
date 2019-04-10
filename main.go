@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -14,7 +15,9 @@ var (
 )
 
 const (
-	API string = "https://api.github.com"
+	API     string = "https://api.github.com"
+	SUCCESS int    = 200
+	LIMIT   int    = 429
 )
 
 type User struct {
@@ -33,7 +36,7 @@ func sendRequest(method string, link string, queries map[string]string) ([]byte,
 	// Create new client to send requests
 	client := http.Client{}
 	// Add timeout to prevent client hijacking
-	client.Timeout = time.Second * 10
+	client.Timeout = time.Second * 30
 	// Create new GET request
 	req, _ := http.NewRequest(method, link, nil)
 
@@ -45,13 +48,15 @@ func sendRequest(method string, link string, queries map[string]string) ([]byte,
 	}
 	req.URL.RawQuery = q.Encode()
 	// Add header parameter to request
+	req.Header.Add("Accept", "application/vnd.github.v3+json")
 	req.Header.Add("User-Agent", config.UserName)
 
 	// Execute request
 	resp, err := client.Do(req)
 	// Check for errors
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return sendRequest(method, link, queries)
 	}
 	// Close connection to save resources
 	defer resp.Body.Close()
@@ -68,6 +73,17 @@ func put(link string, queries map[string]string) ([]byte, int) {
 	return sendRequest("PUT", link, queries)
 }
 
+func sendPutUntilSuccess(login string) bool {
+	data, status := put(API+"/user/following/"+login, nil)
+	if status != 204 {
+		fmt.Println(string(data), status, login)
+		time.Sleep(time.Second * 90)
+		return sendPutUntilSuccess(login)
+	} else {
+		return true
+	}
+}
+
 func main() {
 	data, err := ioutil.ReadFile("Config.json")
 	if err != nil {
@@ -77,7 +93,26 @@ func main() {
 		log.Fatal(err)
 	}
 
-	data, _ = get(API+"/users", nil)
+	var users []User
 
-	fmt.Println(string(data))
+	queries := make(map[string]string)
+	queries["per_page"] = "100"
+
+	i := 13882
+	for {
+		queries["since"] = strconv.Itoa(i)
+		data, _ = get(API+"/users", queries)
+		if err = json.Unmarshal(data, &users); err != nil {
+			log.Fatal(err)
+		}
+		for _, user := range users {
+			time.Sleep(time.Millisecond * 1200)
+			i = user.Id
+			success := false
+			for !success {
+				success = sendPutUntilSuccess(user.Login)
+			}
+			fmt.Println(user.Login, user.Id, "are followed!")
+		}
+	}
 }

@@ -14,7 +14,7 @@ func TestSubot(t *testing.T) {
 	data, status := get(API+"/users", nil)
 	// Attempt to parse response as array of User structure
 	if err := json.Unmarshal(data, &users); err != nil || status != 200 {
-		t.Fatal(err, status)
+		t.Fatal(err, status, string(data))
 	}
 
 	// The first user. Should be mojombo
