@@ -1,5 +1,7 @@
 # go-github-subot
 
+![](https://travis-ci.com/Dmitriy-Vas/go-github-subot.svg?token=u26tKHEPz6C6hydytxzK&branch=master)
+
 A Go package to (un)subscribe to developers automatically.
 
 ## Table of Content
