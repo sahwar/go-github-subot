@@ -129,6 +129,7 @@ To stop executing program use Ctrl^C.
 - [x] Add catching interrupt signal and save config.
 - [x] Add filter by repos/stars/followers/watchers/gists.
 - [x] Add filter by most used language.
+- [ ] Precompiled binaries (Will add tomorrow)
 - [ ] Add filter by recent activity.
 - [ ] Add method to **un**subscribe. 
 - [ ] More filters?
