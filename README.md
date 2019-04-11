@@ -23,7 +23,7 @@ Bot uses github [API](https://developer.github.com/v3/users/followers/) and subs
 + Continue executing from last id/user list page.
 
 ### Install
-You can use precompiled binaries or compile subot for yourself using Go compiler.
+You can download [precompiled binaries](https://github.com/Dmitriy-Vas/go-github-subot/releases) or compile subot for yourself using Go compiler.
 
 + Download Go from official [site](https://golang.org/).
 + Unpack Go somewhere.
