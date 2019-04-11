@@ -22,6 +22,7 @@ const (
 	API        string = "https://api.github.com"
 	SUCCESS    int    = 200
 	NO_CONTENT int    = 204
+	TIMEOUT           = time.Second * 90
 )
 
 type User struct {
@@ -46,17 +47,18 @@ type Project struct {
 }
 
 type Config struct {
-	Token     string `json:"token"`
-	UserName  string `json:"username"`
-	Source    string `json:"source"`
-	Page      int    `json:"page"`
-	Id        int    `json:"id"`
-	Followers int    `json:"followers"`
-	Stars     int    `json:"stars"`
-	Repos     int    `json:"repos"`
-	Watchers  int    `json:"watchers"`
-	Gists     int    `json:"gists"`
-	Language  string `json:"language"`
+	Token     string        `json:"token"`
+	UserName  string        `json:"username"`
+	Timer     time.Duration `json:"timer"`
+	Source    string        `json:"source"`
+	Page      int           `json:"page"`
+	Id        int           `json:"id"`
+	Followers int           `json:"followers"`
+	Stars     int           `json:"stars"`
+	Repos     int           `json:"repos"`
+	Watchers  int           `json:"watchers"`
+	Gists     int           `json:"gists"`
+	Language  string        `json:"language"`
 }
 
 //#endregion
@@ -85,8 +87,7 @@ func sendRequest(method string, link string, queries map[string]string) ([]byte,
 	resp, err := client.Do(req)
 	// Check for errors
 	if err != nil {
-		log.Println(err)
-		return sendRequest(method, link, queries)
+		log.Fatal(err)
 	}
 	// Close connection to save resources
 	defer resp.Body.Close()
@@ -192,40 +193,40 @@ func (user *User) info() {
 	data, status := get(user.URL, nil)
 	if status != SUCCESS {
 		fmt.Println("Error received. Status:", status, "\nMessage:", string(data))
-		time.Sleep(time.Second * 90)
+		time.Sleep(TIMEOUT)
 		user.info()
 		return
 	}
 	if err := json.Unmarshal(data, &user); err != nil {
 		log.Fatal(err)
 	}
-	time.Sleep(time.Second * 1)
+	time.Sleep(time.Millisecond * config.Timer)
 }
 
 func (user *User) follow(queries map[string]string) {
 	data, status := put(API+"/user/following/"+user.Login, nil)
 	if status != NO_CONTENT {
 		fmt.Println("Error received. Status:", status, "\nMessage:", string(data))
-		time.Sleep(time.Second * 90)
+		time.Sleep(TIMEOUT)
 		user.follow(queries)
 		return
 	}
-	fmt.Println(user.Login, "with ID", user.Id, "now following!")
-	time.Sleep(time.Second * 1)
+	fmt.Println(user.Login, "with ID", user.Id, "added to following list!")
+	time.Sleep(time.Millisecond * config.Timer)
 }
 
 func (user *User) getRepositoriesForPage(queries map[string]string) []Project {
 	data, status := get(user.URL+"/repos", queries)
 	if status != SUCCESS {
 		fmt.Println("Error received. Status:", status, "\nMessage:", string(data))
-		time.Sleep(time.Second * 90)
+		time.Sleep(TIMEOUT)
 		return user.getRepositoriesForPage(queries)
 	}
 	var repositories []Project
 	if err := json.Unmarshal(data, &repositories); err != nil {
 		log.Fatal(err)
 	}
-	time.Sleep(time.Second * 1)
+	time.Sleep(time.Millisecond * config.Timer)
 	return repositories
 }
 
@@ -233,14 +234,14 @@ func getFollowers(queries map[string]string) []User {
 	data, status := get(API+"/users/"+config.Source+"/followers", queries)
 	if status != SUCCESS {
 		fmt.Println("Error received. Status:", status, "\nMessage:", string(data))
-		time.Sleep(time.Second * 90)
+		time.Sleep(TIMEOUT)
 		return getFollowers(queries)
 	}
 	var users []User
 	if err := json.Unmarshal(data, &users); err != nil {
 		log.Fatal(err)
 	}
-	time.Sleep(time.Second * 1)
+	time.Sleep(time.Millisecond * config.Timer)
 	return users
 }
 
@@ -248,14 +249,14 @@ func getUsers(queries map[string]string) []User {
 	data, status := get(API+"/users", queries)
 	if status != SUCCESS {
 		fmt.Println("Error received. Status:", status, "\nMessage:", string(data))
-		time.Sleep(time.Second * 90)
+		time.Sleep(TIMEOUT)
 		return getUsers(queries)
 	}
 	var users []User
 	if err := json.Unmarshal(data, &users); err != nil {
 		log.Fatal(err)
 	}
-	time.Sleep(time.Second * 1)
+	time.Sleep(time.Millisecond * config.Timer)
 	return users
 }
 

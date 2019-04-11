@@ -7,7 +7,7 @@ import (
 
 func setCredentials() {
 	config.UserName = "Subot"
-	config.Token = "ee01c5067e591928deca6c902da04be48f89f9fa"
+	config.Token = "eec4d8db4ecf1b1ebffd8c79b84e3cba6e831b65"
 }
 
 func TestSubot(t *testing.T) {

@@ -15,7 +15,7 @@ A Go package to (un)subscribe to developers automatically.
 ### Description
 Bot uses github [API](https://developer.github.com/v3/users/followers/) and subscribe to developers. Bot supports few options:
 
-+ Subscribe to all GitHub developers or from *user* following list.
++ Subscribe to all GitHub developers or from *user* followers list.
 + On those who have *n* repositories/stars/followers/watchers/gists.
 + Who has an id greater than *n*.
 + By most used language.
@@ -48,8 +48,14 @@ Now that subot is installed, you will need to setup your `config.json` file. Thi
 
 ```
 {
-  "token": "axmjs7eeyfvmpvcv3jjuzqv9eylm6t2cv45sqj4y", // Your GitHub personal token. Do not leave the field blank!
-  "username": "Subot"                                  // Your username to send as User-Agent. Do not leave the field blank!
+  // Your GitHub personal token. Do not leave the field blank!
+  "token": "axmjs7eeyfvmpvcv3jjuzqv9eylm6t2cv45sqj4y",
+  
+  // Your username to send as User-Agent. Do not leave the field blank!
+  "username": "Subot",
+  
+  // The time in milliseconds that the program should wait between requests
+  "timer": 1000,
   
   // Source to get list of developers. Write username to get user followers.
   // In this example subot will get list of followed users from user with username Dmitriy-Vas
@@ -63,11 +69,11 @@ Now that subot is installed, you will need to setup your `config.json` file. Thi
   // In this example, if "source" is "all", then subot will start from a user with id more than 15000
   "id": 15000,
   
-  "followers": 0,                                      // Check user for amount of followers, subscribe if amount greater
-  "stars": 0,                                          // Check user repositories and count stars, subscribe if amount greater
-  "repos": 0,                                          // Check amount of user public repositories, subscribe if amount greater
-  "watchers": 0,                                       // Get amount of watches and subscribe if greater than this number
-  "gists": 0                                           // Check for amount of gists and subscribe if amount greater
+  "followers": 0,          // Check user for amount of followers, subscribe if amount greater
+  "stars": 0,              // Check user repositories and count stars, subscribe if amount greater
+  "repos": 0,              // Check amount of user public repositories, subscribe if amount greater
+  "watchers": 0,           // Get amount of watches and subscribe if greater than this number
+  "gists": 0               // Check for amount of gists and subscribe if amount greater
   
   // Check user repositories and get most used language, subscribe if language same as here.
   // In this example subot will follow developers who uses Java
@@ -129,7 +135,9 @@ To stop executing program use Ctrl^C.
 - [x] Add catching interrupt signal and save config.
 - [x] Add filter by repos/stars/followers/watchers/gists.
 - [x] Add filter by most used language.
-- [ ] Precompiled binaries (Will add tomorrow)
+- [x] Add custom cooldown.
+- [x] Precompiled binaries.
 - [ ] Add filter by recent activity.
-- [ ] Add method to **un**subscribe. 
+- [ ] Add method to **un**subscribe.
+- [ ] Optimize code. 
 - [ ] More filters?
