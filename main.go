@@ -50,6 +50,7 @@ type Config struct {
 	Token     string        `json:"token"`
 	UserName  string        `json:"username"`
 	Timer     time.Duration `json:"timer"`
+	Mode      string        `json:"mode"`
 	Source    string        `json:"source"`
 	Page      int           `json:"page"`
 	Id        int           `json:"id"`
@@ -104,6 +105,10 @@ func put(link string, queries map[string]string) ([]byte, int) {
 	return sendRequest("PUT", link, queries)
 }
 
+func del(link string, queries map[string]string) ([]byte, int) {
+	return sendRequest("DELETE", link, queries)
+}
+
 //#endregion
 
 func saveConfig() {
@@ -118,6 +123,53 @@ func saveConfig() {
 		log.Fatal(err)
 	}
 	fmt.Println("Config successfully saved!")
+}
+
+func checkAndUnfollow(users []User) {
+	for _, u := range users {
+		if config.Followers != 0 || config.Repos != 0 ||
+			config.Gists != 0 || config.Watchers != 0 ||
+			config.Stars != 0 || config.Language != "" {
+			u.info()
+			if config.Followers <= u.Followers &&
+				config.Repos <= u.PublicRepos &&
+				config.Gists <= u.PublicGists {
+				fmt.Println(u.Login, "meet requirements! [1]")
+				continue
+			}
+		}
+		if config.Stars != 0 || config.Language != "" || config.Watchers != 0 {
+			u.repositories()
+			u.Stars = 0
+			u.Watchers = 0
+			languages := make(map[string]int)
+			for _, project := range u.Projects {
+				u.Stars += project.StargazersCount
+				u.Watchers += project.Watchers
+				if config.Language != "" {
+					if _, exists := languages[project.Language]; exists {
+						languages[project.Language]++
+					} else {
+						languages[project.Language] = 1
+					}
+				}
+			}
+			usages := 0
+			for key, value := range languages {
+				if usages < value {
+					usages = value
+					u.Language = key
+				}
+			}
+			if config.Stars <= u.Stars &&
+				config.Watchers <= u.Watchers &&
+				config.Language == u.Language {
+				fmt.Println(u.Login, "meet requirements! [2]")
+				continue
+			}
+		}
+		u.unfollow(nil)
+	}
 }
 
 func checkAndFollow(users []User) {
@@ -203,6 +255,18 @@ func (user *User) info() {
 	time.Sleep(time.Millisecond * config.Timer)
 }
 
+func (user *User) unfollow(queries map[string]string) {
+	data, status := del(API+"/user/following/"+user.Login, nil)
+	if status != NO_CONTENT {
+		fmt.Println("Error received. Status:", status, "\nMessage:", string(data))
+		time.Sleep(TIMEOUT)
+		user.unfollow(queries)
+		return
+	}
+	fmt.Println(user.Login, "with ID", user.Id, "deleted from the following list!")
+	time.Sleep(time.Millisecond * config.Timer)
+}
+
 func (user *User) follow(queries map[string]string) {
 	data, status := put(API+"/user/following/"+user.Login, nil)
 	if status != NO_CONTENT {
@@ -211,7 +275,7 @@ func (user *User) follow(queries map[string]string) {
 		user.follow(queries)
 		return
 	}
-	fmt.Println(user.Login, "with ID", user.Id, "added to following list!")
+	fmt.Println(user.Login, "with ID", user.Id, "added to the following list!")
 	time.Sleep(time.Millisecond * config.Timer)
 }
 
@@ -228,6 +292,21 @@ func (user *User) getRepositoriesForPage(queries map[string]string) []Project {
 	}
 	time.Sleep(time.Millisecond * config.Timer)
 	return repositories
+}
+
+func getFollowing(queries map[string]string) []User {
+	data, status := get(API+"/user/following", queries)
+	if status != SUCCESS {
+		fmt.Println("Error received. Status:", status, "\nMessage:", string(data))
+		time.Sleep(TIMEOUT)
+		return getFollowers(queries)
+	}
+	var users []User
+	if err := json.Unmarshal(data, &users); err != nil {
+		log.Fatal(err)
+	}
+	time.Sleep(time.Millisecond * config.Timer)
+	return users
 }
 
 func getFollowers(queries map[string]string) []User {
@@ -291,28 +370,47 @@ func main() {
 
 	var users []User
 
-	if config.Source != "all" {
-		if config.Page <= 0 {
-			config.Page = 1
+	if config.Page <= 0 {
+		config.Page = 1
+	}
+
+	if config.Mode == "follow" {
+		if config.Source != "all" {
+			for {
+				queries["page"] = strconv.Itoa(config.Page)
+				users = getFollowers(queries)
+				if len(users) == 0 {
+					fmt.Println("All users from", config.Source, "who meet requirements, successfully added to the following list!")
+					config.Source = "all"
+					config.Page = 1
+					return
+				}
+				checkAndFollow(users)
+				config.Page++
+			}
+		} else {
+			for {
+				queries["since"] = strconv.Itoa(config.Id)
+				users = getUsers(queries)
+				checkAndFollow(users)
+			}
 		}
+	} else if config.Mode == "unfollow" {
+		var users []User
 		for {
 			queries["page"] = strconv.Itoa(config.Page)
-			users = getFollowers(queries)
-			if len(users) == 0 {
-				fmt.Println("All users from", config.Source, "successfully added to following list!")
-				config.Source = "all"
+			pageUsers := getFollowing(queries)
+			if len(pageUsers) == 0 {
+				fmt.Println("Unfollowing from", len(users), "users begins.")
 				config.Page = 1
-				return
+				break
 			}
-			checkAndFollow(users)
+			users = append(users, pageUsers...)
+			fmt.Println(len(users), " users in the cache.")
 			config.Page++
 		}
-	} else {
-		for {
-			queries["since"] = strconv.Itoa(config.Id)
-			users = getUsers(queries)
-			checkAndFollow(users)
-		}
+		checkAndUnfollow(users)
+		fmt.Println("All users who doesn't meet requirements, successfully deleted from the following list!")
 	}
 
 }

@@ -2,6 +2,7 @@
   "token": "axmjs7eeyfvmpvcv3jjuzqv9eylm6t2cv45sqj4y",
   "username": "Subot",
   "timer": 1000,
+  "mode": "follow",
   "source": "all",
   "page": 1,
   "id": 0,
