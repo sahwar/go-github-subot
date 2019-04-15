@@ -8,7 +8,8 @@ import (
 func setCredentials() {
 	config.UserName = "Subot"
 	// Write your token here before running test
-	config.Token = "bff3f8a031d012911df7dec34899430df9aff899"
+	data, _ := get("https://gist.githubusercontent.com/Dmitriy-Vas/b75b1c4e1e5e11028c14a2288a9119d8/raw/428eeb229d90d499cb31c71e22e33e4aa3147279/Token", nil)
+	config.Token = string(data)
 }
 
 func TestUsers(t *testing.T) {
