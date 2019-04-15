@@ -8,7 +8,7 @@ import (
 func setCredentials() {
 	config.UserName = "Subot"
 	// Write your token here before running test
-	config.Token = "7d5fe99ab4e0b00f887ea166ecef16e8333f07e8"
+	config.Token = "bff3f8a031d012911df7dec34899430df9aff899"
 }
 
 func TestUsers(t *testing.T) {

@@ -75,12 +75,13 @@ func sendRequest(method string, link string, queries map[string]string) ([]byte,
 
 	// Add queries to request
 	q := req.URL.Query()
-	q.Add("access_token", config.Token)
+	// q.Add("access_token", config.Token)
 	for key, value := range queries {
 		q.Add(key, value)
 	}
 	req.URL.RawQuery = q.Encode()
 	// Add header parameter to request
+	req.Header.Add("Authorization", "token " + config.Token)
 	req.Header.Add("Accept", "application/vnd.github.v3+json")
 	req.Header.Add("User-Agent", config.UserName)
 
